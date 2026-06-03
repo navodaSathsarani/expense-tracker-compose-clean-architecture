@@ -234,13 +234,13 @@ AI tools were used **materially** during this submission, in line with the asses
 
 **Transcript evidence:** [docs/ai-transcript.md](docs/ai-transcript.md) — session summary, paraphrased prompts, human vs AI decisions, and optional link to a Cursor chat export. Review for secrets before sharing externally.
 
-Evaluators: the goal is to show **how** the tool was directed and the quality of the output—not merely that AI was used.
+
 
 ---
 
 ## Important notes (from the brief)
 
-- **Completeness vs. quality** — structure, ADRs, and documentation are intentional; some Tier 3 items are left incomplete but described above.
+- **Completeness vs. quality** — structure, ADRs, and documentation are intentional;
 - **Ambiguity** — decisions are documented in [Assumptions](#assumptions) and [ADR.md](ADR.md).
 
 ---
