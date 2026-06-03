@@ -204,7 +204,7 @@ flowchart LR
 
 ---
 
-## Tier 3 — Stretch (not implemented)
+## Tier 3 —  (not implemented)
 
 | Stretch goal | Notes |
 |--------------|-------|
