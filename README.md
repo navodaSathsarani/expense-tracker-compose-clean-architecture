@@ -27,6 +27,7 @@ A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **
 ## Features
 
 - View, add, and delete expenses (sorted by date on the list)
+- **Delete confirmation** — `AlertDialog` before removing an expense
 - Filter by **category** and **date range**
 - **Category summary** (totals, counts, percentages)
 - Loading, empty, and error states with retry
@@ -114,7 +115,7 @@ Kotlin · Jetpack Compose · Material 3 · Navigation Compose · Hilt · Corouti
 ### Prerequisites
 
 - **Android Studio** Ladybug (2024.2+) or newer recommended
-- **JDK 17** (CI uses 17; project `compileOptions` target Java 11)
+- **JDK 17** — Gradle JDK and `jvmToolchain(17)` / `compileOptions` (CI uses 17)
 - **Android SDK** with API 36 (compile) and a device/emulator ≥ API 24 (minSdk)
 
 ### Open the project
@@ -144,7 +145,7 @@ From `expenseTracker/`:
 
 ## Testing strategy
 
-**Focus:** domain use cases and validation rules (pure Kotlin, fast, no Android framework).
+**Focus:** domain use cases and validation rules (pure Kotlin, fast, no Android framework). **20 tests** across the five use-case test classes below.
 
 | Test class | What it verifies |
 |------------|------------------|
@@ -171,7 +172,7 @@ Reports: `app/build/reports/tests/testDebugUnitTest/index.html`
 - **Single user, single device** — no auth, accounts, or multi-device sync.
 - **Currency** — amounts stored with a `currency` field; UI uses a fixed display format (no FX conversion).
 - **Conflict resolution** — last-write-wins on refresh; no merge strategy for concurrent edits.
-- **Filtering** — applied in the domain layer on in-memory lists from Room (not server-side query params on the mock).
+- **Filtering** — applied in the domain layer on lists from Room via `FilterExpensesUseCase`. When **both** category and date range are set, an expense matches if it satisfies **either** filter; if only one dimension is set, that filter alone applies. Mock API supports query params for a future real client.
 - **Summary** — computed from local expenses in `CategorySummaryCalculator` so the summary screen works offline; mock `GET /api/expenses/summary` exists for API parity.
 - **Date inputs** — `java.time.LocalDate` / ISO-8601 strings aligned with the assessment contract.
 - **Assessment time** — ~2–4 hours suggested; Tier 3 items deprioritized in favor of structure, ADRs, and tests (see [Important Notes](#important-notes) from the brief).
@@ -231,7 +232,7 @@ AI tools were used **materially** during this submission, in line with the asses
 | **Cursor (Claude)** | Scaffolding Clean Architecture packages, Compose screens, Room/Hilt wiring, mock API layer, unit test templates, `ADR.md` drafts, and this README structure |
 | **Human direction** | Architecture choices (MVVM + Clean, Room SSOT, Hilt), feature prioritization, review/editing of generated code, commit granularity, and final wording of ADRs |
 
-**Transcript evidence:** [docs/ai-transcript.md](docs/ai-transcript.md) — implementation plan (`CURSOR_PLAN.md`), phased Cursor prompts, ambiguity decisions, and follow-up README session. Review for secrets before sharing externally.
+**Transcript evidence:** [docs/ai-transcript.md](docs/ai-transcript.md) — session summary, paraphrased prompts, human vs AI decisions, and optional link to a Cursor chat export. Review for secrets before sharing externally.
 
 Evaluators: the goal is to show **how** the tool was directed and the quality of the output—not merely that AI was used.
 
