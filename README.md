@@ -7,6 +7,7 @@ A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **
 | **This README** | Repository root (start here for assessors) |
 | **Android project** | [`expenseTracker/`](expenseTracker/) — open in Android Studio |
 | **ADRs** | [`ADR.md`](ADR.md) |
+| **AI transcript** | [`docs/ai-transcript.md`](docs/ai-transcript.md) |
 | **CI** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 
 ### Submission checklist (assessor map)
@@ -25,11 +26,21 @@ A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **
 
 ## Features
 
-- View, add, and delete expenses
+- View, add, and delete expenses (sorted by date on the list)
 - Filter by **category** and **date range**
 - **Category summary** (totals, counts, percentages)
 - Loading, empty, and error states with retry
 - **Offline-first**: Room is the single source of truth; mock API syncs in the background
+
+### Requirements coverage
+
+| Tier | Item | Status |
+|------|------|--------|
+| **Tier 1** | Expense list, add/delete, layered architecture, ≥3 unit tests, README | Done |
+| **Tier 2** | Filtering, error handling, loading/empty UI, ADR, DI, repository abstraction | Done |
+| **Tier 3** | Offline-first (Room), summary view, CI (GitHub Actions) | Partial — see [stretch](#tier-3--stretch-not-implemented) |
+
+**User stories:** US-1–US-4, US-6–US-7 implemented; US-5 (offline) via Room SSOT; edit expense and multi-currency not implemented.
 
 ---
 
@@ -39,109 +50,62 @@ The app uses **MVVM** on top of **Clean Architecture**: UI never talks to Room o
 
 ### Layer diagram
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                     PRESENTATION (Android)                        │
-│   Compose Screens  ←→  ViewModels (Hilt)  ←→  sealed UiState     │
-│   Navigation Compose · stringResource() · Material 3               │
-└───────────────────────────────┬──────────────────────────────────┘
-                                │ calls use cases only
-                                ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     DOMAIN (pure Kotlin)                            │
-│   Expense · Category · Use Cases · ExpenseRepository (interface) │
-│   FilterExpenses · GetSummary · Add/Delete · RefreshExpenses     │
-└───────────────────────────────┬──────────────────────────────────┘
-                                │ implemented by
-                                ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     DATA (Android)                                │
-│   ExpenseRepositoryImpl · Room (SSOT) · MockExpenseDataSource    │
-│   ExpenseApi contract · Entity/DTO mappers · CategoryMapper      │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-### Request / data flow (typical screen)
-
 ```mermaid
 flowchart TB
-    subgraph presentation [Presentation]
-        UI[Compose Screen]
-        VM[ViewModel]
-        UI --> VM
-        VM --> UI
+    subgraph presentation["Presentation"]
+        UI["Compose Screens"]
+        VM["ViewModels + UiState"]
     end
-
-    subgraph domain [Domain]
-        UC[Use Case]
-        REPO_IF[ExpenseRepository interface]
-        UC --> REPO_IF
+    subgraph domain["Domain (pure Kotlin)"]
+        UC["Use Cases"]
+        REPO_IF["ExpenseRepository interface"]
+        MODEL["Expense, Category, CategorySummary"]
     end
-
-    subgraph data [Data]
-        REPO_IMPL[ExpenseRepositoryImpl]
-        ROOM[(Room DB - SSOT)]
-        API[Mock ExpenseApi]
-        REPO_IMPL --> ROOM
-        REPO_IMPL --> API
+    subgraph data["Data"]
+        REPO_IMPL["ExpenseRepositoryImpl"]
+        ROOM["Room (ExpenseDao)"]
+        API["ExpenseApi → MockExpenseDataSource"]
     end
-
+    UI --> VM
     VM --> UC
-    REPO_IF --> REPO_IMPL
-    ROOM -->|Flow emissions| REPO_IMPL
-    REPO_IMPL -->|refresh / write| API
+    UC --> REPO_IF
+    REPO_IMPL -.implements.-> REPO_IF
+    REPO_IMPL --> ROOM
+    REPO_IMPL --> API
 ```
 
-### Layer responsibilities
+### Data flow (offline-first)
 
-| Layer | Packages (under `app/.../expensetracker/`) | Responsibility |
-|-------|--------------------------------------------|----------------|
-| **Presentation** | `presentation/`, `navigation/`, `ui/theme/` | UI, navigation, `StateFlow` / `UiState`, user events |
-| **Domain** | `domain/model/`, `domain/repository/`, `domain/usecase/` | Business rules, validation, filtering, summary math |
-| **Data** | `data/local/`, `data/remote/`, `data/repository/`, `data/mapper/` | Persistence, API, mapping, repository implementation |
-| **DI** | `di/` | Hilt modules wiring implementations to interfaces |
+1. **Reads:** UI observes `Flow` from Room via repository (reactive list and summary).
+2. **Writes:** Insert/delete in Room first; mock API called in a try/catch (fire-and-forget sync).
+3. **Refresh:** `RefreshExpensesUseCase` pulls mock remote data and replaces Room contents.
 
-### Key decisions (short)
+### Package layout (`expenseTracker/app/src/main/java/com/example/expensetracker/`)
 
-- **Room = SSOT** — UI reads via `Flow`; writes go to Room first, then sync to API
-- **`ExpenseApi`** — mirrors REST (category, `from`, `to`, summary) for a future Retrofit/Ktor client
-- **Use cases** — ViewModels do not call `ExpenseRepository` directly for refresh (see `RefreshExpensesUseCase`)
-- **Domain is Android-free** — ready to move into a KMP `:shared` module later ([ADR-004](ADR.md))
+| Layer | Packages |
+|-------|----------|
+| Presentation | `presentation/*`, `navigation/`, `ui/theme/` |
+| Domain | `domain/model/`, `domain/usecase/`, `domain/repository/`, `domain/util/` |
+| Data | `data/local/`, `data/remote/`, `data/repository/`, `data/mapper/` |
+| DI | `di/` (Hilt modules) |
 
-Full rationale: **[ADR.md](ADR.md)** (ADR-001 … ADR-005).
+### Network contract (mock, swappable)
 
----
+Designed as if these were real REST endpoints; swap `MockExpenseDataSource` for Retrofit with minimal changes (`ExpenseApi` + DTOs already mirror the contract).
 
-## Tech stack
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/expenses` | List expenses |
+| GET | `/api/expenses?category={cat}&from={date}&to={date}` | Filter |
+| POST | `/api/expenses` | Create |
+| DELETE | `/api/expenses/{id}` | Delete |
+| GET | `/api/expenses/summary` | Category summary (summary also computed locally from Room for offline consistency) |
 
-| Area | Choice |
-|------|--------|
-| Language | Kotlin |
-| UI | Jetpack Compose, Material 3, Navigation Compose |
-| Architecture | MVVM + Clean Architecture + Repository |
-| DI | Hilt |
-| Async | Coroutines, Flow, `collectAsStateWithLifecycle` |
-| Local DB | Room (offline-first) |
-| Remote | Mock datasource behind `ExpenseApi` |
-| Tests | JUnit 5, MockK, `kotlinx-coroutines-test` (domain only) |
+**Models:** `Expense` (id, amount, currency, category, note, date, createdAt); `CategorySummary` (category, total, count, percentage). Categories: `food`, `transport`, `entertainment`, `shopping`, `bills`, `other`.
 
----
+### Tech stack
 
-## Project structure
-
-```
-expense-tracker-compose-clean-architecture/
-├── README.md                 ← you are here
-├── ADR.md
-├── .github/workflows/ci.yml
-└── expenseTracker/           ← Gradle root (open in Android Studio)
-    └── app/src/main/java/com/example/expensetracker/
-        ├── presentation/     # Screens, ViewModels, components
-        ├── domain/           # Models, repository contract, use cases
-        ├── data/             # Room, API, repository impl, mappers
-        ├── di/               # Hilt
-        └── navigation/       # NavGraph
-```
+Kotlin · Jetpack Compose · Material 3 · Navigation Compose · Hilt · Coroutines · Flow · Room · JUnit · MockK
 
 ---
 
@@ -149,188 +113,137 @@ expense-tracker-compose-clean-architecture/
 
 ### Prerequisites
 
-- **Android Studio** Hedgehog (2023.1.1) or newer
-- **JDK 17** for Gradle (**Settings → Build → Gradle → Gradle JDK → 17**). Project uses JVM toolchain 17; Kotlin/KSP/Hilt aligned in `libs.versions.toml` (Kotlin 2.1, Hilt 2.56+).
-- **Android SDK 36** (`compileSdk`; `targetSdk` 34)
-- **minSdk** 24
+- **Android Studio** Ladybug (2024.2+) or newer recommended
+- **JDK 17** (CI uses 17; project `compileOptions` target Java 11)
+- **Android SDK** with API 36 (compile) and a device/emulator ≥ API 24 (minSdk)
 
-### Steps
+### Open the project
 
-1. **Clone**
-   ```bash
-   git clone <repository-url>
-   cd expense-tracker-compose-clean-architecture
-   ```
+1. Clone this repository.
+2. In Android Studio: **File → Open** → select the [`expenseTracker/`](expenseTracker/) folder (Gradle root).
+3. Wait for Gradle sync to finish.
 
-2. **Open in Android Studio**
-   - **File → Open**
-   - Select the **`expenseTracker`** folder (not the repo root)
-   - Wait for Gradle sync
+### Run on device or emulator
 
-3. **Build**
-   ```bash
-   cd expenseTracker
-   ./gradlew assembleDebug
-   ```
+- Select a run configuration for the `app` module and click **Run**, or from `expenseTracker/`:
 
-4. **Run on device/emulator**
-   ```bash
-   ./gradlew installDebug
-   ```
-   Or use the **Run** button in Android Studio.
+```bash
+chmod +x gradlew   # once, if needed
+./gradlew installDebug
+```
 
-5. **Unit tests** (domain layer)
-   ```bash
-   cd expenseTracker
-   ./gradlew test
-   ```
+### Command-line build
 
-6. **Full CI locally** (same as GitHub Actions)
-   ```bash
-   cd expenseTracker
-   ./gradlew test assembleDebug
-   ```
+From `expenseTracker/`:
 
-### CI (GitHub Actions)
-
-On push/PR to `main`, from [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
-
-- `working-directory: expenseTracker`
-- `./gradlew test`
-- `./gradlew assembleDebug`
-
----
-
-## Assumptions
-
-### Product and scope
-
-| Topic | Assumption | Notes |
-|-------|------------|--------|
-| **Time box** | ~2–4 hours for implementation + docs | Android-only delivery prioritized over KMP scaffolding |
-| **Platforms** | Android required by brief; iOS not in scope | Domain written without Android APIs for future KMP |
-| **Users** | Single user, single device | No auth, no multi-device sync rules |
-| **Currency** | LKR in UI; `currency` on model | Multi-currency UI out of scope |
-| **Filters** | If **both** category and dates set → **OR**; else filter by the one dimension set | Implemented in `FilterExpensesUseCase`; would confirm with PM in production |
-
-### Technical
-
-| Topic | Assumption | Notes |
-|-------|------------|--------|
-| **Backend** | No real server | `MockExpenseDataSource` + ~1s delay; `ExpenseApi` ready for Retrofit/Ktor |
-| **Conflicts** | Last-write-wins on sync | Fine for single-user; not for collaborative editing |
-| **Persistence** | Room on Android | KMP would use SQLDelight or Room KMP in platform `actual` |
-| **DI** | Hilt on Android only | Shared KMP code would use constructor injection + Koin or manual graph |
-| **Pagination** | Not implemented | `LazyColumn` uses stable `key = { it.id }` |
-| **Delete** | No confirmation dialog | Listed under future work |
-| **Errors** | User taps retry on error state | No WorkManager backoff queue in scope |
-| **Strings** | `res/values/strings.xml` | No hardcoded UI copy |
-| **KMP** | **Not in this repository** | Would need `:shared`, expect/actual, multi-platform CI — see below |
+```bash
+./gradlew assembleDebug
+```
 
 ---
 
 ## Testing strategy
 
-**20 domain unit tests** under `expenseTracker/app/src/test/.../domain/usecase/`:
+**Focus:** domain use cases and validation rules (pure Kotlin, fast, no Android framework).
 
-| Use case | Focus |
-|----------|--------|
-| `AddExpenseUseCase` | Validation (e.g. amount > 0) |
-| `DeleteExpenseUseCase` | Repository interaction |
-| `FilterExpensesUseCase` | Category, dates, OR logic |
-| `GetSummaryUseCase` | Percentages, sorting, edge cases |
-| `RefreshExpensesUseCase` | Sync invokes repository |
+| Test class | What it verifies |
+|------------|------------------|
+| `AddExpenseUseCaseTest` | Valid expense persisted; invalid amount rejected |
+| `DeleteExpenseUseCaseTest` | Delete delegates to repository |
+| `FilterExpensesUseCaseTest` | Category and date-range filtering |
+| `GetSummaryUseCaseTest` | Summary flow from repository |
+| `RefreshExpensesUseCaseTest` | Refresh triggers repository sync |
 
-**Not covered (time-boxed):** ViewModels, Room integration tests, Compose UI tests. Rationale: **[ADR-005](ADR.md)**.
+Run all unit tests from `expenseTracker/`:
+
+```bash
+./gradlew test
+```
+
+Reports: `app/build/reports/tests/testDebugUnitTest/index.html`
+
+**Not covered (by choice, time-boxed):** Compose UI tests, instrumented tests, repository integration tests against in-memory Room.
+
+---
+
+## Assumptions
+
+- **Single user, single device** — no auth, accounts, or multi-device sync.
+- **Currency** — amounts stored with a `currency` field; UI uses a fixed display format (no FX conversion).
+- **Conflict resolution** — last-write-wins on refresh; no merge strategy for concurrent edits.
+- **Filtering** — applied in the domain layer on in-memory lists from Room (not server-side query params on the mock).
+- **Summary** — computed from local expenses in `CategorySummaryCalculator` so the summary screen works offline; mock `GET /api/expenses/summary` exists for API parity.
+- **Date inputs** — `java.time.LocalDate` / ISO-8601 strings aligned with the assessment contract.
+- **Assessment time** — ~2–4 hours suggested; Tier 3 items deprioritized in favor of structure, ADRs, and tests (see [Important Notes](#important-notes) from the brief).
 
 ---
 
 ## What you would do differently with more time
 
-### 1. Kotlin Multiplatform (primary architectural upgrade)
+1. **Kotlin Multiplatform** — extract `domain/` to `commonMain`, SQLDelight + Ktor `actual`s for Android/iOS (see [ADR-004](ADR.md#adr-004-android-only-for-assessment-kotlin-multiplatform-deferred)).
+2. **Production sync** — WorkManager queue, retry/backoff, optimistic UI with rollback, server timestamps for conflicts.
+3. **Real HTTP client** — Retrofit + OkHttp implementing `ExpenseApi`, with interceptors and structured error mapping to user-facing states.
+4. **Edit expense** — update use case, DAO `UPDATE`, and navigation from list item.
+5. **Input validation UX** — inline field errors, accessibility labels, content descriptions for screen readers.
+6. **Multi-currency** — locale-aware formatting (`NumberFormat`), optional default currency in settings.
+7. **Tests** — repository tests with in-memory Room; Compose UI tests for empty/error flows.
+8. **Pagination** — `PagingSource` on `ExpenseDao` for large lists.
 
-With a **multi-platform product** mandate and more than a few days, I would **not** maintain duplicate Android/iOS business logic. I would extract today’s `domain/` (and repository interfaces) into KMP:
-
+```mermaid
+flowchart LR
+    subgraph now["This repo"]
+        A[":app Android"]
+    end
+    subgraph later["With more time"]
+        S[":shared commonMain"]
+        A2[":androidApp"]
+        I[":iosApp"]
+    end
+    S --> A2
+    S --> I
 ```
-:shared (commonMain)
-  domain models · use cases · repository interfaces · commonTest
-
-:shared (androidMain / iosMain)
-  actual: DB driver · HTTP · platform date/locale
-
-:androidApp
-  Compose UI · Hilt · Room or SQLDelight driver
-
-:iosApp (optional)
-  SwiftUI or Compose Multiplatform
-```
-
-| Share in `commonMain` | Keep platform-specific |
-|------------------------|-------------------------|
-| Models, use cases, filter/summary rules | Room / SQLDelight |
-| Repository contracts | Ktor or Retrofit client |
-| `commonTest` for all use case tests | Hilt (Android), UI toolkit |
-
-**UI options:** Compose Multiplatform (one UI codebase) **or** shared ViewModels/MVI in `commonMain` with native SwiftUI on iOS.
-
-**Why not KMP in this submission:** Gradle modules, expect/actual, and iOS CI need **days**, not hours. This repo optimizes for a **complete Android app**, ADRs, and domain tests. See **[ADR-004](ADR.md)**.
-
-### 2. Backend and sync
-
-- Real REST API + OpenAPI spec in repo
-- **Ktor** shared client (KMP) or Retrofit (Android)
-- **WorkManager** retry queue; server timestamps; explicit conflict policy
-
-### 3. Product and quality
-
-- Edit expense, delete confirmation, search, pagination
-- Multi-currency formatting
-- Charts / analytics
-- ViewModel + Compose UI tests; `commonTest` on JVM for shared logic
-- CI matrix: JVM `shared` + Android + optional iOS simulator
-
-### Near-term (Android-only, no KMP)
-
-- Retrofit/Ktor replacing mock API
-- Paging, search, edit flow
-- Deeper test coverage (ViewModel, UI)
-- Export (CSV), improved network error UX
 
 ---
 
-## Known limitations
+## Tier 3 — Stretch (not implemented)
 
-1. No delete confirmation
-2. No edit expense
-3. No search / pagination
-4. Single currency (LKR) in UI
-5. Basic refresh error handling
-6. No export or authentication
-7. Tests limited to domain layer
-8. **Kotlin Multiplatform not implemented** (documented migration path above)
+| Stretch goal | Notes |
+|--------------|-------|
+| Accessibility (TalkBack, dynamic type) | Basic Compose defaults only |
+| Multi-currency / advanced formatting | Fixed formatting |
+| Performance doc (list recycling) | LazyColumn used; no separate perf write-up |
+| Full offline sync polish | Room SSOT yes; production-grade sync no |
+
+---
+
+## CI
+
+GitHub Actions on `main`: unit tests + debug APK build. See [`.github/workflows/ci.yml`](.github/workflows/ci.yml). All commands run with `working-directory: expenseTracker`.
 
 ---
 
 ## AI usage disclosure
 
-- **Cursor** — implementation, refactoring, documentation
-- **Claude** — early scaffolding for models, UI, ADRs
+AI tools were used **materially** during this submission, in line with the assessment brief.
 
-All generated code was reviewed. I can explain design and implementation choices.
+| Tool | How it was used |
+|------|-----------------|
+| **Cursor (Claude)** | Scaffolding Clean Architecture packages, Compose screens, Room/Hilt wiring, mock API layer, unit test templates, `ADR.md` drafts, and this README structure |
+| **Human direction** | Architecture choices (MVVM + Clean, Room SSOT, Hilt), feature prioritization, review/editing of generated code, commit granularity, and final wording of ADRs |
 
-**AI transcript:** add your Cursor export link here before submission.
+**Transcript evidence:** [docs/ai-transcript.md](docs/ai-transcript.md) — implementation plan (`CURSOR_PLAN.md`), phased Cursor prompts, ambiguity decisions, and follow-up README session. Review for secrets before sharing externally.
+
+Evaluators: the goal is to show **how** the tool was directed and the quality of the output—not merely that AI was used.
 
 ---
 
-## Performance notes
+## Important notes (from the brief)
 
-- `LazyColumn` with `key = { it.id }`
-- Summary via `GetSummaryUseCase` / `CategorySummaryCalculator` (not in Composables)
-- Room `Flow` + lifecycle-aware collection
-- Strings externalized for localization
+- **Completeness vs. quality** — structure, ADRs, and documentation are intentional; some Tier 3 items are left incomplete but described above.
+- **Ambiguity** — decisions are documented in [Assumptions](#assumptions) and [ADR.md](ADR.md).
 
 ---
 
 ## License
 
-Technical assessment submission. All rights reserved.
+See [LICENSE](LICENSE).
