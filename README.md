@@ -35,8 +35,8 @@ Expense tracking with **Jetpack Compose**, **MVVM**, **Clean Architecture**, **o
 
 ### Implementation phases
 
-| Tier | Item | Status |
-|------|------|--------|
+| Tier | Item 
+|------|------|
 | **Tier 1** | Expense list, add/delete, layered architecture, ≥3 unit tests, README 
 | **Tier 2** | Filtering, error handling, loading/empty UI, ADR, DI, repository abstraction 
 | **Tier 3** | Offline-first (Room), summary view, CI (GitHub Actions)
