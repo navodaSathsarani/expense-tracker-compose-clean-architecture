@@ -1,6 +1,6 @@
 # Expense Tracker — Android (Clean Architecture)
 
-A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **MVVM**, **Clean Architecture**, **offline-first Room**, category/date **filtering**, **spending summary**, and **domain unit tests**.
+Expense tracking with **Jetpack Compose**, **MVVM**, **Clean Architecture**, **offline-first Room**, category/date **filtering**, **spending summary**, and **domain unit tests**.
 
 | Document | Location |
 |----------|----------|
@@ -10,15 +10,15 @@ A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **
 | **AI transcript** | [`docs/ai-transcript.md`](docs/ai-transcript.md) |
 | **CI** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 
-### Submission checklist (assessor map)
+### Road Map
 
-| Requirement | Section |
+| Feature | Section |
 |-------------|---------|
 | Architecture overview (+ diagram) | [Architecture overview](#architecture-overview) |
 | How to build and run | [How to build and run](#how-to-build-and-run) |
 | Assumptions | [Assumptions](#assumptions) |
 | What you would do differently with more time | [What you would do differently with more time](#what-you-would-do-differently-with-more-time) |
-| ADR.md (≥ 2 records) | [ADR.md](ADR.md) |
+| ADR | [ADR.md](ADR.md) |
 | Tests + how to run | [Testing strategy](#testing-strategy) · `./gradlew test` |
 | AI usage disclosure | [AI usage disclosure](#ai-usage-disclosure) |
 
@@ -33,15 +33,13 @@ A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **
 - Loading, empty, and error states with retry
 - **Offline-first**: Room is the single source of truth; mock API syncs in the background
 
-### Requirements coverage
+### Implementation phases
 
 | Tier | Item | Status |
 |------|------|--------|
-| **Tier 1** | Expense list, add/delete, layered architecture, ≥3 unit tests, README | Done |
-| **Tier 2** | Filtering, error handling, loading/empty UI, ADR, DI, repository abstraction | Done |
-| **Tier 3** | Offline-first (Room), summary view, CI (GitHub Actions) | Partial — see [stretch](#tier-3--stretch-not-implemented) |
-
-**User stories:** US-1–US-4, US-6–US-7 implemented; US-5 (offline) via Room SSOT; edit expense and multi-currency not implemented.
+| **Tier 1** | Expense list, add/delete, layered architecture, ≥3 unit tests, README 
+| **Tier 2** | Filtering, error handling, loading/empty UI, ADR, DI, repository abstraction 
+| **Tier 3** | Offline-first (Room), summary view, CI (GitHub Actions)
 
 ---
 
