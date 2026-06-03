@@ -15,6 +15,9 @@
     <string name="error_load_expenses">Failed to load expenses</string>
     <string name="error_refresh_expenses">Failed to refresh expenses</string>
     <string name="error_delete_expense">Failed to delete expense</string>
+    <string name="delete_confirm_title">Delete expense?</string>
+    <string name="delete_confirm_message">Remove %1$s %2$.2f from your list? This cannot be undone.</string>
+    <string name="delete_confirm_action">Delete</string>
 
     <!-- Add expense -->
     <string name="amount_label">Amount</string>

@@ -7,17 +7,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.example.expensetracker.domain.model.Expense
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.expensetracker.R
@@ -36,6 +42,38 @@ fun ExpenseListScreen(
     viewModel: ExpenseListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var expensePendingDelete by remember { mutableStateOf<Expense?>(null) }
+
+    expensePendingDelete?.let { expense ->
+        AlertDialog(
+            onDismissRequest = { expensePendingDelete = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.delete_confirm_message,
+                        expense.currency,
+                        expense.amount
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteExpense(expense.id)
+                        expensePendingDelete = null
+                    }
+                ) {
+                    Text(stringResource(R.string.delete_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { expensePendingDelete = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     Scaffold(
         modifier = modifier,
@@ -95,7 +133,7 @@ fun ExpenseListScreen(
                     ) { expense ->
                         ExpenseItem(
                             expense = expense,
-                            onDelete = { viewModel.deleteExpense(expense.id) }
+                            onDelete = { expensePendingDelete = expense }
                         )
                     }
                 }
