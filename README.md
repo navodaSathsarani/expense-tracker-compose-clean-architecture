@@ -9,6 +9,18 @@ A tech-lead assessment submission: expense tracking with **Jetpack Compose**, **
 | **ADRs** | [`ADR.md`](ADR.md) |
 | **CI** | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 
+### Submission checklist (assessor map)
+
+| Requirement | Section |
+|-------------|---------|
+| Architecture overview (+ diagram) | [Architecture overview](#architecture-overview) |
+| How to build and run | [How to build and run](#how-to-build-and-run) |
+| Assumptions | [Assumptions](#assumptions) |
+| What you would do differently with more time | [What you would do differently with more time](#what-you-would-do-differently-with-more-time) |
+| ADR.md (≥ 2 records) | [ADR.md](ADR.md) |
+| Tests + how to run | [Testing strategy](#testing-strategy) · `./gradlew test` |
+| AI usage disclosure | [AI usage disclosure](#ai-usage-disclosure) |
+
 ---
 
 ## Features
@@ -96,7 +108,7 @@ flowchart TB
 - **Use cases** — ViewModels do not call `ExpenseRepository` directly for refresh (see `RefreshExpensesUseCase`)
 - **Domain is Android-free** — ready to move into a KMP `:shared` module later ([ADR-004](ADR.md))
 
-Full rationale: **[ADR.md](ADR.md)** (ADR-001 … ADR-004).
+Full rationale: **[ADR.md](ADR.md)** (ADR-001 … ADR-005).
 
 ---
 
@@ -138,7 +150,7 @@ expense-tracker-compose-clean-architecture/
 ### Prerequisites
 
 - **Android Studio** Hedgehog (2023.1.1) or newer
-- **JDK 17**
+- **JDK 17** for Gradle (**Settings → Build → Gradle → Gradle JDK → 17**). Project uses JVM toolchain 17; Kotlin/KSP/Hilt aligned in `libs.versions.toml` (Kotlin 2.1, Hilt 2.56+).
 - **Android SDK 36** (`compileSdk`; `targetSdk` 34)
 - **minSdk** 24
 
@@ -229,11 +241,11 @@ On push/PR to `main`, from [`.github/workflows/ci.yml`](.github/workflows/ci.yml
 | `GetSummaryUseCase` | Percentages, sorting, edge cases |
 | `RefreshExpensesUseCase` | Sync invokes repository |
 
-**Not covered (time-boxed):** ViewModels, Room integration tests, Compose UI tests.
+**Not covered (time-boxed):** ViewModels, Room integration tests, Compose UI tests. Rationale: **[ADR-005](ADR.md)**.
 
 ---
 
-## What I would do in the future (more time)
+## What you would do differently with more time
 
 ### 1. Kotlin Multiplatform (primary architectural upgrade)
 

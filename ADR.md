@@ -277,6 +277,36 @@ Document the KMP migration path in the root **README** (“What I Would Do Diffe
 
 ---
 
+## ADR-005: Domain-Only Unit Testing Strategy
+
+**Status:** Accepted
+
+**Date:** 2026-06-03
+
+### Context
+
+The assessment rewards testable architecture but is time-boxed. Options ranged from no tests, domain-only unit tests, repository integration tests, ViewModel tests, and Compose UI tests.
+
+### Decision
+
+Implement **20 unit tests** in `expenseTracker/app/src/test/.../domain/usecase/` covering all use cases with JUnit + MockK + `kotlinx-coroutines-test`. Mock `ExpenseRepository` at the use-case boundary.
+
+**State management (presentation):** sealed `UiState` + `StateFlow` in ViewModels; not separately ADR’d beyond ADR-001.
+
+**Validation:** Client-side rules in domain (`AddExpenseUseCase` — amount > 0, required fields); no server validation in mock API scope.
+
+### Alternatives Considered
+
+- **ViewModel / UI tests**: Rejected for time box; high setup (Hilt test rules, Compose test harness).
+- **In-memory Room tests**: Valuable but deferred; domain tests already prove business rules.
+
+### Consequences
+
+- Fast, deterministic CI (`./gradlew test`).
+- Gaps documented in README; future work adds `androidTest` and `commonTest` (KMP).
+
+---
+
 ## Summary
 
 These decisions form the architectural foundation of the Expense Tracker app:
@@ -285,5 +315,6 @@ These decisions form the architectural foundation of the Expense Tracker app:
 2. **Offline-First with Room**: Correct for finance apps, though sync logic is simplified
 3. **Hilt DI**: Industry standard, compile-time safe, worth the setup overhead
 4. **Android-only now, KMP later**: Time-boxed delivery; domain ready to move to `commonMain`
+5. **Domain-only tests**: Maximum ROI within time box; integration/UI tests deferred
 
 All decisions prioritize **long-term maintainability and team scalability** over short-term development speed, which is appropriate for a tech lead assessment demonstrating architectural judgment.
