@@ -17,8 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.expensetracker.R
 import com.example.expensetracker.domain.model.Expense
 import java.time.format.DateTimeFormatter
 
@@ -44,7 +46,11 @@ fun ExpenseItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "${expense.currency} ${String.format("%.2f", expense.amount)}",
+                    text = stringResource(
+                        R.string.currency_amount,
+                        expense.currency,
+                        expense.amount
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -71,7 +77,7 @@ fun ExpenseItem(
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete expense",
+                    contentDescription = stringResource(R.string.cd_delete_expense),
                     tint = MaterialTheme.colorScheme.error
                 )
             }

@@ -2,7 +2,6 @@ package com.example.expensetracker.data.mapper
 
 import com.example.expensetracker.data.local.entity.ExpenseEntity
 import com.example.expensetracker.data.remote.dto.ExpenseDto
-import com.example.expensetracker.domain.model.Category
 import com.example.expensetracker.domain.model.Expense
 import java.time.Instant
 import java.time.LocalDate
@@ -12,7 +11,7 @@ fun ExpenseDto.toDomain(): Expense {
         id = id,
         amount = amount,
         currency = currency,
-        category = Category.valueOf(category),
+        category = category.toDomainCategory(),
         note = note,
         date = LocalDate.parse(date),
         createdAt = Instant.ofEpochMilli(createdAt)
@@ -24,7 +23,7 @@ fun ExpenseDto.toEntity(): ExpenseEntity {
         id = id,
         amount = amount,
         currency = currency,
-        category = category,
+        category = category.toDomainCategory().name,
         note = note,
         date = LocalDate.parse(date),
         createdAt = Instant.ofEpochMilli(createdAt)
@@ -36,7 +35,7 @@ fun ExpenseEntity.toDomain(): Expense {
         id = id,
         amount = amount,
         currency = currency,
-        category = Category.valueOf(category),
+        category = category.toDomainCategory(),
         note = note,
         date = date,
         createdAt = createdAt
@@ -60,7 +59,7 @@ fun Expense.toDto(): ExpenseDto {
         id = id,
         amount = amount,
         currency = currency,
-        category = category.name,
+        category = category.toApiCategory(),
         note = note,
         date = date.toString(),
         createdAt = createdAt.toEpochMilli()

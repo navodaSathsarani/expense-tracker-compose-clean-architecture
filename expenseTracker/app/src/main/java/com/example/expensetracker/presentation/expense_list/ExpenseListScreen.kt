@@ -5,7 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -16,8 +17,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.expensetracker.R
 import com.example.expensetracker.presentation.components.EmptyState
 import com.example.expensetracker.presentation.components.ErrorState
 import com.example.expensetracker.presentation.components.ExpenseItem
@@ -28,6 +31,7 @@ import com.example.expensetracker.presentation.components.LoadingState
 fun ExpenseListScreen(
     onNavigateToAddExpense: () -> Unit,
     onNavigateToSummary: () -> Unit,
+    onNavigateToFilter: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ExpenseListViewModel = hiltViewModel()
 ) {
@@ -37,12 +41,18 @@ fun ExpenseListScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Expense Tracker") },
+                title = { Text(stringResource(R.string.expense_list_title)) },
                 actions = {
+                    IconButton(onClick = onNavigateToFilter) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = stringResource(R.string.cd_filter_expenses)
+                        )
+                    }
                     IconButton(onClick = onNavigateToSummary) {
                         Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "View Summary"
+                            imageVector = Icons.Default.PieChart,
+                            contentDescription = stringResource(R.string.cd_view_summary)
                         )
                     }
                 }
@@ -52,7 +62,7 @@ fun ExpenseListScreen(
             FloatingActionButton(onClick = onNavigateToAddExpense) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add Expense"
+                    contentDescription = stringResource(R.string.cd_add_expense)
                 )
             }
         }
@@ -64,9 +74,13 @@ fun ExpenseListScreen(
 
             is ExpenseListUiState.Empty -> {
                 EmptyState(
-                    message = "No expenses yet.\nStart tracking your spending!",
-                    actionText = "Add Expense",
-                    onAction = onNavigateToAddExpense,
+                    message = stringResource(state.messageRes),
+                    actionText = stringResource(state.actionTextRes),
+                    onAction = if (state.actionTextRes == R.string.change_filter_action) {
+                        onNavigateToFilter
+                    } else {
+                        onNavigateToAddExpense
+                    },
                     modifier = Modifier.padding(paddingValues)
                 )
             }

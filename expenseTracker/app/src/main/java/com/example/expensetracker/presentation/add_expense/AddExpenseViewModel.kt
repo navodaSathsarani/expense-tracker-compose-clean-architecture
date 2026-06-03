@@ -1,11 +1,14 @@
 package com.example.expensetracker.presentation.add_expense
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.expensetracker.R
 import com.example.expensetracker.domain.model.Category
 import com.example.expensetracker.domain.model.Expense
 import com.example.expensetracker.domain.usecase.AddExpenseUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,14 +21,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddExpenseViewModel @Inject constructor(
-    private val addExpenseUseCase: AddExpenseUseCase
+    private val addExpenseUseCase: AddExpenseUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())
     val uiState: StateFlow<AddExpenseUiState> = _uiState.asStateFlow()
 
     fun onAmountChange(amount: String) {
-        _uiState.update { it.copy(amount = amount, amountError = null) }
+        _uiState.update { it.copy(amount = amount, amountErrorRes = null) }
     }
 
     fun onCategoryChange(category: Category) {
@@ -39,10 +43,11 @@ class AddExpenseViewModel @Inject constructor(
     fun saveExpense() {
         val currentState = _uiState.value
 
-        // Validate amount
         val amountValue = currentState.amount.toDoubleOrNull()
         if (amountValue == null || amountValue <= 0) {
-            _uiState.update { it.copy(amountError = "Please enter a valid amount greater than 0") }
+            _uiState.update {
+                it.copy(amountErrorRes = R.string.amount_error_invalid)
+            }
             return
         }
 
@@ -66,7 +71,7 @@ class AddExpenseViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        amountError = e.message ?: "Failed to save expense"
+                        amountErrorRes = R.string.error_save_expense
                     )
                 }
             }

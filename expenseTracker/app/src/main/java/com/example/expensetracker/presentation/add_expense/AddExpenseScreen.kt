@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -30,11 +31,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.expensetracker.R
 import com.example.expensetracker.domain.model.Category
+import com.example.expensetracker.presentation.util.displayName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +50,6 @@ fun AddExpenseScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var categoryExpanded by remember { mutableStateOf(false) }
 
-    // Navigate back on successful save
     LaunchedEffect(uiState.isSaved) {
         if (uiState.isSaved) {
             onNavigateBack()
@@ -57,12 +60,12 @@ fun AddExpenseScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Add Expense") },
+                title = { Text(stringResource(R.string.add_expense_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -76,31 +79,31 @@ fun AddExpenseScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Amount field
             OutlinedTextField(
                 value = uiState.amount,
                 onValueChange = viewModel::onAmountChange,
-                label = { Text("Amount") },
+                label = { Text(stringResource(R.string.amount_label)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                isError = uiState.amountError != null,
+                isError = uiState.amountErrorRes != null,
                 supportingText = {
-                    uiState.amountError?.let { Text(it) }
+                    uiState.amountErrorRes?.let { errorRes ->
+                        Text(stringResource(errorRes))
+                    }
                 },
-                prefix = { Text("LKR ") },
+                prefix = { Text(stringResource(R.string.currency_prefix)) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             )
 
-            // Category dropdown
             ExposedDropdownMenuBox(
                 expanded = categoryExpanded,
                 onExpandedChange = { categoryExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = uiState.category.name,
+                    value = uiState.category.displayName(),
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Category") },
+                    label = { Text(stringResource(R.string.category_label)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
                     },
@@ -114,9 +117,9 @@ fun AddExpenseScreen(
                     expanded = categoryExpanded,
                     onDismissRequest = { categoryExpanded = false }
                 ) {
-                    Category.values().forEach { category ->
+                    Category.entries.forEach { category ->
                         DropdownMenuItem(
-                            text = { Text(category.name) },
+                            text = { Text(category.displayName()) },
                             onClick = {
                                 viewModel.onCategoryChange(category)
                                 categoryExpanded = false
@@ -126,11 +129,10 @@ fun AddExpenseScreen(
                 }
             }
 
-            // Note field
             OutlinedTextField(
                 value = uiState.note,
                 onValueChange = viewModel::onNoteChange,
-                label = { Text("Note (Optional)") },
+                label = { Text(stringResource(R.string.note_label)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
@@ -140,7 +142,6 @@ fun AddExpenseScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Save button
             Button(
                 onClick = viewModel::saveExpense,
                 modifier = Modifier.fillMaxWidth(),
@@ -151,10 +152,10 @@ fun AddExpenseScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         CircularProgressIndicator()
-                        Text("Saving...")
+                        Text(stringResource(R.string.saving_expense))
                     }
                 } else {
-                    Text("Save Expense")
+                    Text(stringResource(R.string.save_expense))
                 }
             }
         }

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.expensetracker.domain.model.Category
+import com.example.expensetracker.presentation.util.displayName
 
 @Composable
 fun CategoryChip(
@@ -18,7 +19,7 @@ fun CategoryChip(
         onClick = { },
         label = {
             Text(
-                text = category.name,
+                text = category.displayName(),
                 style = MaterialTheme.typography.labelSmall
             )
         },

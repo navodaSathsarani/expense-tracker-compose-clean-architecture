@@ -1,3 +1,73 @@
 <resources>
-    <string name="app_name">expenseTracker</string>
+    <string name="app_name">Expense Tracker</string>
+
+    <!-- Screens -->
+    <string name="expense_list_title">Expense Tracker</string>
+    <string name="add_expense_title">Add Expense</string>
+    <string name="summary_title">Spending Summary</string>
+    <string name="filter_title">Filter Expenses</string>
+
+    <!-- Expense list -->
+    <string name="empty_expenses_message">No expenses yet.\nStart tracking your spending!</string>
+    <string name="empty_filtered_message">No expenses match the selected filter.</string>
+    <string name="add_expense_action">Add Expense</string>
+    <string name="change_filter_action">Change Filter</string>
+    <string name="error_load_expenses">Failed to load expenses</string>
+    <string name="error_refresh_expenses">Failed to refresh expenses</string>
+    <string name="error_delete_expense">Failed to delete expense</string>
+
+    <!-- Add expense -->
+    <string name="amount_label">Amount</string>
+    <string name="currency_prefix">LKR </string>
+    <string name="category_label">Category</string>
+    <string name="note_label">Note (Optional)</string>
+    <string name="save_expense">Save Expense</string>
+    <string name="saving_expense">Saving…</string>
+    <string name="amount_error_invalid">Please enter a valid amount greater than 0</string>
+    <string name="error_save_expense">Failed to save expense</string>
+
+    <!-- Summary -->
+    <string name="total_spending">Total Spending</string>
+    <string name="by_category">By Category</string>
+    <string name="empty_summary_message">No expenses to summarize yet.</string>
+    <string name="go_back">Go Back</string>
+    <string name="currency_amount">%1$s %2$.2f</string>
+    <string name="summary_percentage">%1$.1f%%</string>
+
+    <!-- Filter -->
+    <string name="filter_by_category">Filter by category</string>
+    <string name="filter_by_date_range">Filter by date range</string>
+    <string name="filter_start_date">Start date</string>
+    <string name="filter_end_date">End date</string>
+    <string name="filter_select_start">Select start date</string>
+    <string name="filter_select_end">Select end date</string>
+    <string name="filter_not_set">Not set</string>
+    <string name="filter_clear_dates">Clear dates</string>
+    <string name="apply_filter">Apply Filter</string>
+    <string name="clear_filter">Clear Filter</string>
+
+    <!-- Categories -->
+    <string name="category_food">Food</string>
+    <string name="category_transport">Transport</string>
+    <string name="category_entertainment">Entertainment</string>
+    <string name="category_shopping">Shopping</string>
+    <string name="category_bills">Bills</string>
+    <string name="category_other">Other</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_back">Back</string>
+    <string name="cd_filter_expenses">Filter expenses</string>
+    <string name="cd_view_summary">View summary</string>
+    <string name="cd_add_expense">Add expense</string>
+    <string name="cd_delete_expense">Delete expense</string>
+
+    <!-- Common -->
+    <string name="retry">Retry</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <plurals name="expense_count">
+        <item quantity="one">%d expense</item>
+        <item quantity="other">%d expenses</item>
+    </plurals>
 </resources>

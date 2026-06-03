@@ -18,12 +18,15 @@ class FilterExpensesUseCase @Inject constructor(
         return getExpensesUseCase().map { expenses ->
             expenses.filter { expense ->
                 val matchesCategory = category == null || expense.category == category
-                val matchesDateRange = (startDate == null || !expense.date.isBefore(startDate)) &&
+                val matchesDateRange =
+                    (startDate == null || !expense.date.isBefore(startDate)) &&
                         (endDate == null || !expense.date.isAfter(endDate))
 
-                // OR logic: matches if category OR date range filter passes (when both are null, returns all)
+                val hasCategoryFilter = category != null
+                val hasDateFilter = startDate != null || endDate != null
+
                 when {
-                    category != null && startDate != null -> matchesCategory || matchesDateRange
+                    hasCategoryFilter && hasDateFilter -> matchesCategory || matchesDateRange
                     else -> matchesCategory && matchesDateRange
                 }
             }

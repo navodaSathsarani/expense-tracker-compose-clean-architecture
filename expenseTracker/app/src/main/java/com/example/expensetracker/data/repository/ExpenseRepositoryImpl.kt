@@ -8,6 +8,7 @@ import com.example.expensetracker.data.remote.api.ExpenseApi
 import com.example.expensetracker.domain.model.CategorySummary
 import com.example.expensetracker.domain.model.Expense
 import com.example.expensetracker.domain.repository.ExpenseRepository
+import com.example.expensetracker.domain.util.CategorySummaryCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -17,7 +18,6 @@ class ExpenseRepositoryImpl @Inject constructor(
     private val expenseApi: ExpenseApi
 ) : ExpenseRepository {
 
-    // Room is the Single Source of Truth (SSOT)
     override fun getExpenses(): Flow<List<Expense>> {
         return expenseDao.getExpenses().map { entities ->
             entities.map { it.toDomain() }
@@ -25,51 +25,34 @@ class ExpenseRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addExpense(expense: Expense) {
-        // Save to local database first
         expenseDao.insertExpense(expense.toEntity())
 
-        // Sync to remote (fire and forget for simplicity)
         try {
             expenseApi.addExpense(expense.toDto())
-        } catch (e: Exception) {
-            // In production, implement proper sync mechanism
-            // For now, local data persists even if remote fails
+        } catch (_: Exception) {
+            // Local data persists when remote sync fails (offline-first).
         }
     }
 
     override suspend fun deleteExpense(id: String) {
-        // Delete from local database first
         expenseDao.deleteExpense(id)
 
-        // Sync to remote (fire and forget for simplicity)
         try {
             expenseApi.deleteExpense(id)
-        } catch (e: Exception) {
-            // In production, implement proper sync mechanism
+        } catch (_: Exception) {
+            // Local delete stands when remote sync fails.
         }
     }
 
     override fun getSummary(): Flow<List<CategorySummary>> {
-        // Summary is calculated in the use case layer from expenses
-        // This method exists for interface compliance but isn't used directly
-        throw UnsupportedOperationException("Summary is calculated in GetSummaryUseCase")
+        return getExpenses().map { expenses ->
+            CategorySummaryCalculator.fromExpenses(expenses)
+        }
     }
 
     override suspend fun refreshExpenses() {
-        try {
-            // Fetch from remote API
-            val remoteExpenses = expenseApi.getExpenses()
-
-            // Clear local cache
-            expenseDao.clearExpenses()
-
-            // Insert fresh data from remote
-            val entities = remoteExpenses.map { it.toEntity() }
-            expenseDao.insertExpenses(entities)
-        } catch (e: Exception) {
-            // If refresh fails, local data remains unchanged
-            // In production, handle errors more gracefully
-            throw e
-        }
+        val remoteExpenses = expenseApi.getExpenses()
+        expenseDao.clearExpenses()
+        expenseDao.insertExpenses(remoteExpenses.map { it.toEntity() })
     }
 }

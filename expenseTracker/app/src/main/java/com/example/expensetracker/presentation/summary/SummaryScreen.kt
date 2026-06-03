@@ -25,12 +25,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.expensetracker.R
 import com.example.expensetracker.domain.model.CategorySummary
 import com.example.expensetracker.presentation.components.EmptyState
+import com.example.expensetracker.presentation.util.displayName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,12 +49,12 @@ fun SummaryScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Spending Summary") },
+                title = { Text(stringResource(R.string.summary_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -59,8 +63,8 @@ fun SummaryScreen(
     ) { paddingValues ->
         if (summaryList.isEmpty()) {
             EmptyState(
-                message = "No expenses to summarize yet.",
-                actionText = "Go Back",
+                message = stringResource(R.string.empty_summary_message),
+                actionText = stringResource(R.string.go_back),
                 onAction = onNavigateBack,
                 modifier = Modifier.padding(paddingValues)
             )
@@ -72,7 +76,6 @@ fun SummaryScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Total spending card
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth()
@@ -82,12 +85,16 @@ fun SummaryScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Total Spending",
+                                text = stringResource(R.string.total_spending),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "LKR ${String.format("%.2f", summaryList.sumOf { it.total })}",
+                                text = stringResource(
+                                    R.string.currency_amount,
+                                    "LKR",
+                                    summaryList.sumOf { it.total }
+                                ),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -98,13 +105,12 @@ fun SummaryScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "By Category",
+                        text = stringResource(R.string.by_category),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
-                // Category summaries
                 items(summaryList) { summary ->
                     CategorySummaryItem(summary = summary)
                 }
@@ -130,12 +136,12 @@ private fun CategorySummaryItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = summary.category.name,
+                    text = summary.category.displayName(),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${String.format("%.1f", summary.percentage)}%",
+                    text = stringResource(R.string.summary_percentage, summary.percentage),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -157,12 +163,20 @@ private fun CategorySummaryItem(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "LKR ${String.format("%.2f", summary.total)}",
+                    text = stringResource(
+                        R.string.currency_amount,
+                        "LKR",
+                        summary.total
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${summary.count} expense${if (summary.count > 1) "s" else ""}",
+                    text = pluralStringResource(
+                        R.plurals.expense_count,
+                        summary.count,
+                        summary.count
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
