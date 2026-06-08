@@ -22,13 +22,7 @@ class FilterExpensesUseCase @Inject constructor(
                     (startDate == null || !expense.date.isBefore(startDate)) &&
                         (endDate == null || !expense.date.isAfter(endDate))
 
-                val hasCategoryFilter = category != null
-                val hasDateFilter = startDate != null || endDate != null
-
-                when {
-                    hasCategoryFilter && hasDateFilter -> matchesCategory || matchesDateRange
-                    else -> matchesCategory && matchesDateRange
-                }
+                matchesCategory && matchesDateRange
             }
         }
     }

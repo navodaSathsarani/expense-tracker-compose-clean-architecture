@@ -1,6 +1,8 @@
 package com.example.expensetracker.presentation.add_expense
 
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.expensetracker.R
@@ -22,7 +24,6 @@ import javax.inject.Inject
 @HiltViewModel
 class AddExpenseViewModel @Inject constructor(
     private val addExpenseUseCase: AddExpenseUseCase,
-    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())
@@ -40,6 +41,7 @@ class AddExpenseViewModel @Inject constructor(
         _uiState.update { it.copy(note = note) }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun saveExpense() {
         val currentState = _uiState.value
 

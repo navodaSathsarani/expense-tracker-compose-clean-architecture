@@ -1,6 +1,7 @@
 package com.example.expensetracker.data.mapper
 
 import com.example.expensetracker.data.local.entity.ExpenseEntity
+import com.example.expensetracker.data.local.entity.SyncStatus
 import com.example.expensetracker.data.remote.dto.ExpenseDto
 import com.example.expensetracker.domain.model.Expense
 import java.time.Instant
@@ -26,7 +27,8 @@ fun ExpenseDto.toEntity(): ExpenseEntity {
         category = category.toDomainCategory().name,
         note = note,
         date = LocalDate.parse(date),
-        createdAt = Instant.ofEpochMilli(createdAt)
+        createdAt = Instant.ofEpochMilli(createdAt),
+        syncStatus = SyncStatus.SYNCED
     )
 }
 
@@ -42,7 +44,7 @@ fun ExpenseEntity.toDomain(): Expense {
     )
 }
 
-fun Expense.toEntity(): ExpenseEntity {
+fun Expense.toEntity(syncStatus: SyncStatus = SyncStatus.PENDING_UPLOAD): ExpenseEntity {
     return ExpenseEntity(
         id = id,
         amount = amount,
@@ -50,7 +52,8 @@ fun Expense.toEntity(): ExpenseEntity {
         category = category.name,
         note = note,
         date = date,
-        createdAt = createdAt
+        createdAt = createdAt,
+        syncStatus = syncStatus
     )
 }
 

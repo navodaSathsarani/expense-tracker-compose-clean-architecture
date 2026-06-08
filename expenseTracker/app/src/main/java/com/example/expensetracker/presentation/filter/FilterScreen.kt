@@ -1,5 +1,7 @@
 package com.example.expensetracker.presentation.filter
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -42,6 +44,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterScreen(
@@ -223,8 +226,10 @@ fun FilterScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 private fun Long.toLocalDate(): LocalDate =
     Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 
+@RequiresApi(Build.VERSION_CODES.O)
 private fun LocalDate.toEpochMilli(): Long =
     atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()

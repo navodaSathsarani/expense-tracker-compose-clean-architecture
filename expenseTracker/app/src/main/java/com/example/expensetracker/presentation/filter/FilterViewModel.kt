@@ -1,5 +1,7 @@
 package com.example.expensetracker.presentation.filter
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.example.expensetracker.domain.model.Category
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +33,7 @@ class FilterViewModel @Inject constructor() : ViewModel() {
         _selectedCategory.value = if (_selectedCategory.value == category) null else category
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun setStartDate(date: LocalDate?) {
         _startDate.value = date
         val end = _endDate.value
@@ -39,6 +42,7 @@ class FilterViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun setEndDate(date: LocalDate?) {
         _endDate.value = date
         val start = _startDate.value

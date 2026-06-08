@@ -16,7 +16,8 @@ data class ExpenseEntity(
     val category: String,
     val note: String?,
     val date: LocalDate,
-    val createdAt: Instant
+    val createdAt: Instant,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )
 
 class Converters {
@@ -39,4 +40,11 @@ class Converters {
     fun toInstant(value: Long?): Instant? {
         return value?.let { Instant.ofEpochMilli(it) }
     }
+
+    @TypeConverter
+    fun fromSyncStatus(value: SyncStatus?): String? = value?.name
+
+    @TypeConverter
+    fun toSyncStatus(value: String?): SyncStatus? =
+        value?.let { SyncStatus.valueOf(it) }
 }

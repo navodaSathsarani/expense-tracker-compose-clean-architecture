@@ -114,22 +114,19 @@ class FilterExpensesUseCaseTest {
     }
 
     @Test
-    fun `filter by category and date range uses OR logic`() = runTest {
-        // Given - FOOD category OR between Jan 20-30
+    fun `filter by category and date range uses AND logic`() = runTest {
         val startDate = LocalDate.of(2024, 1, 20)
         val endDate = LocalDate.of(2024, 1, 30)
 
-        // When
         val result = filterExpensesUseCase(
             category = Category.FOOD,
             startDate = startDate,
             endDate = endDate
         ).first()
 
-        // Then - Should return FOOD expenses (id 1, 3) OR expenses in date range (id 3, 4)
-        // Combined: id 1 (FOOD), id 3 (FOOD + in range), id 4 (in range)
-        assertTrue(result.size >= 2) // At least the matching ones
-        assertTrue(result.any { it.id == "1" } || result.any { it.id == "3" } || result.any { it.id == "4" })
+        assertEquals(1, result.size)
+        assertEquals("3", result[0].id)
+        assertEquals(Category.FOOD, result[0].category)
     }
 
     @Test
